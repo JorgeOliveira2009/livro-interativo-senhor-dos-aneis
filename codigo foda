@@ -1,0 +1,578 @@
+// ==================== Interfaces ====================
+interface IEscolha {
+  texto: string;
+  proximaPagina: number;
+}
+
+interface IPagina {
+  id: number;
+  texto: string;
+  escolhas: IEscolha[];
+  proximaPagina?: number;
+  executar(): number | null;
+}
+
+// ==================== Itens ====================
+abstract class BaseItem {
+  constructor(
+    public nome: string,
+    public consumivel: boolean = true
+  ) {}
+
+  abstract usar(): void;
+}
+
+class Arma extends BaseItem {
+  constructor(nome: string, public dano: number) {
+    super(nome, false);
+  }
+
+  usar(): void {
+    console.log(`⚔️ Você ataca com ${this.nome}, causando ${this.dano} de dano!`);
+  }
+}
+
+// ==================== Personagens ====================
+abstract class Personagem {
+  constructor(public nome: string, public arma: Arma) {}
+
+  abstract habilidadeEspecial(): void;
+
+  atacar(): void {
+    this.arma.usar();
+  }
+}
+
+class Nazgul extends Personagem {
+  constructor() {
+    super("Nazgûl", new Arma("Lâmina envenenada", 20));
+  }
+  habilidadeEspecial(): void {
+    console.log("☠️ O medo paralisa suas ações!");
+  }
+}
+
+class Orc extends Personagem {
+  constructor() {
+    super("Orc", new Arma("Machado enferrujado", 10));
+  }
+  habilidadeEspecial(): void {
+    console.log("💀 O orc grita e chama reforços!");
+  }
+}
+
+class Balrog extends Personagem {
+  constructor() {
+    super("Balrog", new Arma("Chicote de fogo", 50));
+  }
+  habilidadeEspecial(): void {
+    console.log("🔥 O Balrog envolve tudo em chamas!");
+  }
+}
+
+class OrcMarinho extends Personagem {
+  constructor() {
+    super("Orc Marinho", new Arma("Tridente de Orc Marinho", 15));
+  }
+  habilidadeEspecial(): void {
+    console.log("🌊 Orc Marinho tenta puxar você para as profundezas!");
+  }
+}
+
+class UrukHai extends Personagem {
+  constructor() {
+    super("Uruk-hai", new Arma("Espada Longa", 20));
+  }
+  habilidadeEspecial(): void {
+    console.log("⚔️ Uruk-hai investe com força brutal!");
+  }
+}
+
+class Shelob extends Personagem {
+  constructor() {
+    super("Shelob", new Arma("Veneno mortal", 30));
+  }
+  habilidadeEspecial(): void {
+    console.log("🕷️ Shelob lança teias venenosas!");
+  }
+}
+
+// ==================== Páginas ====================
+abstract class PaginaBase implements IPagina {
+  constructor(
+    public id: number,
+    public texto: string,
+    public escolhas: IEscolha[] = [],
+    public proximaPagina?: number
+  ) {}
+
+  abstract executar(): number | null;
+
+  protected mostrarEscolhas(): void {
+    console.log("\n--- Suas Opções ---");
+    this.escolhas.forEach((escolha, index) => {
+      console.log(`${index + 1}. ${escolha.texto}`);
+    });
+  }
+}
+
+class PaginaBatalha extends PaginaBase {
+  constructor(
+    id: number,
+    texto: string,
+    public inimigo: Personagem,
+    public recompensa: BaseItem[],
+    proximaPagina?: number
+  ) {
+    super(id, texto, [], proximaPagina);
+  }
+
+  executar(): number | null {
+    console.log(this.texto);
+    console.log(`Enfrentando: ${this.inimigo.nome}!`);
+    this.inimigo.atacar();
+    console.log("✨ Você venceu a batalha!");
+    this.recompensa.forEach(itm => console.log(`Você recebeu: ${itm.nome}`));
+    return this.proximaPagina ?? null;
+  }
+}
+
+class PaginaExploracao extends PaginaBase {
+  executar(): number | null {
+    console.log(this.texto);
+    this.mostrarEscolhas();
+    return null;
+  }
+}
+
+class PaginaMorte extends PaginaBase {
+  executar(): number | null {
+    console.log(`☠️ ${this.texto}`);
+    return null;
+  }
+}
+
+// ==================== Criação das páginas ====================
+const paginas: Record<number, IPagina> = {
+  1: new PaginaExploracao(
+    1,
+    "Você é Frodo Baggins, vivendo pacatamente no Condado. É uma manhã calma, mas algo inquietante paira no ar. Gandalf chega, ofegante e preocupado. Ele lhe conta sobre o poder do Anel e o perigo que se aproxima: se permanecer com você, forças sombrias irão atrás. Você sente o peso da responsabilidade e o medo cresce em seu peito. O que fazer diante desta notícia avassaladora?",
+    [
+      { texto: "Aceitar a missão de levar o Anel para fora do Condado, junto de Sam", proximaPagina: 2 },
+      { texto: "Ignorar Gandalf e permanecer no Condado, tentando a vida normal", proximaPagina: 99 }
+    ]
+  ),
+  2: new PaginaExploracao(
+    2,
+    "Você e Sam preparam-se para partir. A luz da manhã atravessa as árvores, mas você sente olhos invisíveis observando. Cada passo em direção à saída do Condado aumenta o peso do Anel e a ansiedade sobre o que está por vir. Vocês podem seguir por caminhos diferentes: pelo campo aberto, que é mais rápido, ou pela floresta, que oferece sombras e proteção, mas é desconhecida e cheia de perigos.",
+    [
+      { texto: "Seguir pelo campo aberto, confiando na rapidez", proximaPagina: 3 },
+      { texto: "Seguir pela floresta, buscando proteção e sombras", proximaPagina: 4 }
+    ]
+  ),
+  3: new PaginaMorte(
+    3,
+    "Ao atravessar o campo aberto, o vento leva o cheiro do Anel aos Nazgûl. Eles aparecem de repente, e o medo o paralisa. Você é capturado e o Condado cai nas mãos de Sauron."
+  ),
+  4: new PaginaExploracao(
+    4,
+    "Entrar na floresta traz alívio imediato. As árvores são altas e densas, escondendo você e Sam dos olhares sombrios. Vocês ouvem o canto dos pássaros, mas a sensação de perseguição nunca desaparece. Durante a caminhada, encontram Merry e Pippin, que insistem em acompanhá-los. Juntos, o grupo tem mais chance de escapar, mas também aumenta a responsabilidade.",
+    [
+      { texto: "Seguir viagem até a estalagem em Bri, buscando abrigo", proximaPagina: 5 },
+      { texto: "Parar para descansar perto de uma colina, aproveitando a segurança temporária", proximaPagina: 98 }
+    ]
+  ),
+  5: new PaginaExploracao(
+    5,
+    "A estalagem em Bri parece acolhedora, mas a atmosfera é tensa. Um homem misterioso observa vocês atentamente. Cada passo dentro do salão faz o coração acelerar. Será amigo ou inimigo? A escolha que você fizer pode determinar o destino da jornada.",
+    [
+      { texto: "Aproximar-se do homem e falar com ele, tentando descobrir suas intenções", proximaPagina: 6 },
+      { texto: "Ignorar o homem e sair sozinho, confiando apenas em Sam e seus amigos", proximaPagina: 97 }
+    ]
+  ),
+  6: new PaginaExploracao(
+    6,
+    "O homem se apresenta como Aragorn, um guia experiente e protetor. Ele oferece ajuda para proteger o grupo dos perigos que se aproximam. Mesmo com desconfiança, você percebe que precisará de aliados para atravessar as terras cheias de inimigos. O que decidir?",
+    [
+      { texto: "Confiar em Aragorn e aceitar sua ajuda", proximaPagina: 7 },
+      { texto: "Recusar a ajuda e seguir por conta própria", proximaPagina: 96 }
+    ]
+  ),
+  7: new PaginaExploracao(
+    7,
+    "Com Aragorn guiando, vocês seguem viagem. O vento noturno traz um cheiro metálico e sinistro. Algo se aproxima... os Nazgûl estão por perto. Eles podem atacar a qualquer momento. Vocês precisam decidir se se escondem ou enfrentam diretamente o perigo.",
+    [
+      { texto: "Esconder-se em Amon Sûl, utilizando a colina como proteção", proximaPagina: 8 },
+      { texto: "Enfrentar os Nazgûl, confiando na coragem do grupo", proximaPagina: 95 }
+    ]
+  ),
+  8: new PaginaBatalha(
+    8,
+    "Os Nazgûl atacam durante a noite em Amon Sûl. Você sente o frio do medo, mas Aragorn mantém o grupo firme. Uma batalha intensa ocorre, e o perigo é real. A sorte parece sorrir, e vocês conseguem escapar, mas não sem ferimentos.",
+    new Nazgul(),
+    [new Arma("Adaga de Gondor", 12)],
+    9
+  ),
+  9: new PaginaExploracao(
+    9,
+    "Frodo sente a dor de uma lâmina envenenada, mas Aragorn age rapidamente, guiando vocês para fora do perigo imediato. Cada passo é pesado, e o cansaço toma conta. Vocês precisam decidir se seguem imediatamente ou descansam um pouco antes de continuar a viagem.",
+    [
+      { texto: "Seguir viagem com urgência, sem perder tempo", proximaPagina: 10 }
+    ]
+  ),
+  10: new PaginaExploracao(
+    10,
+    "Vocês chegam a Valfenda. Elrond, preocupado com o peso do Anel sobre Frodo, oferece cuidados e abrigo. No Conselho de Elrond, representantes de várias raças debatem sobre o destino do Anel. A decisão que você tomar agora moldará o curso da história.",
+    [
+      { texto: "Aceitar fazer parte da Sociedade do Anel e partir para destruir o Anel", proximaPagina: 11 },
+      { texto: "Recusar a missão, temendo os perigos", proximaPagina: 94 }
+    ]
+  )
+};
+
+// ==================== Loop Principal ====================
+import * as readlineSync from "readline-sync";
+
+let paginaAtualId = 1;
+
+while (true) {
+  const pagina = paginas[paginaAtualId];
+
+  if (!pagina) {
+    console.log("Página não encontrada! O jogo vai terminar.");
+    break;
+  }
+
+  const resultado = pagina.executar();
+
+  if (resultado !== null) {
+    paginaAtualId = resultado;
+    continue;
+  }
+
+  if (pagina.escolhas.length === 0) {
+    console.log("Fim da aventura!");
+    break;
+  }
+
+  const escolha = readlineSync.question("Escolha uma opção (numero): ");
+  const indice = parseInt(escolha) - 1;
+  const escolhaSelecionada = pagina.escolhas[indice];
+
+  if (!escolhaSelecionada) {
+    console.log("Escolha inválida, tente novamente.");
+    continue;
+  }
+
+  paginaAtualId = escolhaSelecionada.proximaPagina;
+
+  paginas[11] = new PaginaExploracao(
+  11,
+  "A Sociedade parte de Valfenda. A viagem é longa, atravessando florestas densas e vales silenciosos. Frodo sente o Anel cada vez mais pesado, quase como se estivesse vivo, pressionando sua mente e sua vontade. O grupo discute qual caminho tomar: a travessia de Caradhras, a montanha nevada, ou o caminho por Moria, escuro e perigoso. Cada decisão carrega riscos e incertezas.",
+  [
+    { texto: "Tentar atravessar Caradhras, confiando na velocidade", proximaPagina: 12 },
+    { texto: "Seguir direto para Moria, mesmo desconhecendo os perigos subterrâneos", proximaPagina: 15 }
+  ]
+);
+
+paginas[12] = new PaginaExploracao(
+  12,
+  "A subida de Caradhras começa bem, mas logo uma nevasca violenta cobre o grupo. A neve é traiçoeira, tornando cada passo um risco. O frio corta a pele, e o vento parece sussurrar ameaças invisíveis. A travessia parece impossível, e o tempo está contra vocês.",
+  [
+    { texto: "Desistir e procurar a entrada de Moria", proximaPagina: 15 },
+    { texto: "Persistir e tentar atravessar a montanha mesmo com o perigo iminente", proximaPagina: 13 }
+  ]
+);
+
+paginas[13] = new PaginaMorte(
+  13,
+  "O vento e a neve se tornam incontroláveis. Você escorrega em uma encosta e é arrastado para um penhasco gelado. A montanha engole aqueles que insistem em desafiá-la."
+);
+
+paginas[15] = new PaginaExploracao(
+  15,
+  "Vocês chegam à entrada oculta de Moria. O ambiente é sombrio e silencioso, com ecos que fazem a coragem de todos vacilar. As portas antigas exigem a senha de entrada, mas o conhecimento dela não é garantido. Cada passo em Moria pode trazer surpresas, e o perigo é constante.",
+  [
+    { texto: "Tentar falar a palavra 'Amigo' em élfico, confiando no conhecimento", proximaPagina: 16 },
+    { texto: "Forçar a entrada, quebrando a porta", proximaPagina: 93 }
+  ]
+);
+
+paginas[16] = new PaginaExploracao(
+  16,
+  "As portas se abrem silenciosamente. Vocês entram e a escuridão os envolve. O ar é pesado, úmido, e cada ruído ecoa pelos corredores de pedra. Sons metálicos de passos distantes indicam que orcs ainda habitam este lugar. Vocês precisam escolher se avançam pelo caminho principal ou procuram passagens laterais, mais seguras mas mais longas.",
+  [
+    { texto: "Avançar pelo caminho principal, mesmo arriscado", proximaPagina: 17 }
+  ]
+);
+
+paginas[17] = new PaginaBatalha(
+  17,
+  "Orcs aparecem em bando! O som de suas vozes é assustador. Frodo sente o Anel quase pulsando em sua mão, como se amplificasse o perigo. A luta é inevitável, mas cada golpe que você dá é essencial para sobreviver e proteger os amigos.",
+  new Orc(),
+  [new Arma("Espada Curta", 10)],
+  18
+);
+
+paginas[18] = new PaginaExploracao(
+  18,
+  "Vocês escapam dos orcs feridos, mas a tensão aumenta: um rugido sombrio reverbera pelo corredor. Um Balrog desperta nas profundezas de Moria. O chão treme e as chamas iluminam a escuridão. Cada passo agora pode ser fatal. O que fazer diante de um inimigo de poder inimaginável?",
+  [
+    { texto: "Enfrentar o Balrog junto de Gandalf", proximaPagina: 19 },
+    { texto: "Tentar fugir sem lutar, esperando se esconder nas sombras", proximaPagina: 92 }
+  ]
+);
+
+paginas[19] = new PaginaBatalha(
+  19,
+  "🔥 Gandalf se posiciona na ponte, encarando o Balrog. Ele grita comandos e força a passagem. O fogo e a sombra se misturam. Frodo sente o peso do Anel aumentando, mas a coragem surge. A batalha é intensa, mas a estratégia e a união podem salvar todos.",
+  new Balrog(),
+  [],
+  20
+);
+
+paginas[20] = new PaginaExploracao(
+  20,
+  "Gandalf cai no abismo junto com o Balrog, e o grupo fica em choque. Vocês conseguem sair de Moria, mas a perda pesa no coração de todos. Cada passo é agora um lembrete de que o caminho é longo e perigoso, mas a missão deve continuar. A escolha é seguir diretamente até Lorien ou descansar e planejar a viagem com mais cuidado.",
+  [
+    { texto: "Seguir viagem imediatamente até Lorien", proximaPagina: 21 },
+    { texto: "Descansar próximo ao rio e organizar suprimentos", proximaPagina: 91 }
+  ]
+);
+
+paginas[21] = new PaginaExploracao(
+  21,
+  "Vocês entram na floresta dourada de Lothlórien, e a atmosfera muda: o ar é leve, a luz parece brilhar através das árvores de uma forma mágica. Sam observa maravilhado, mas você sente o peso do Anel ainda mais presente. Elfos silenciosos os observam das sombras, e uma sensação de paz e vigilância os envolve. Galadriel, a Senhora da Floresta, surge diante do grupo, oferecendo ajuda e conselhos. O que fazer?",
+  [
+    { texto: "Aceitar a orientação de Galadriel e ouvir seus conselhos", proximaPagina: 22 },
+    { texto: "Ignorar e continuar a viagem por conta própria", proximaPagina: 90 }
+  ]
+);
+
+paginas[22] = new PaginaExploracao(
+  22,
+  "Galadriel oferece um presente a cada membro da Sociedade. Ela olha profundamente em seus olhos e oferece algo especial, que pode ser útil na jornada: uma lembrança da floresta ou uma proteção contra o mal. O presente pode fazer a diferença em momentos críticos. Sam sussurra que devemos aceitar com cuidado, pensando no futuro. O que escolher?",
+  [
+    { texto: "Aceitar a lembrança que Galadriel oferece para Frodo", proximaPagina: 23 },
+    { texto: "Recusar, confiando apenas na sua própria sorte e coragem", proximaPagina: 89 }
+  ]
+);
+
+paginas[23] = new PaginaExploracao(
+  23,
+  "Com os presentes e bênçãos de Galadriel, vocês seguem para o cais da floresta. A travessia do Rio Anduin é necessária, e a escolha do caminho é crucial: pegar uma embarcação rápida, mas visível, ou uma menor e silenciosa, arriscando ficar presos em correntes traiçoeiras. Cada decisão pode atrair olhares perigosos ou garantir segurança temporária.",
+  [
+    { texto: "Escolher a embarcação rápida, arriscando ser visto", proximaPagina: 24 },
+    { texto: "Escolher a pequena e silenciosa canoa, arriscando as correntes", proximaPagina: 25 }
+  ]
+);
+
+paginas[24] = new PaginaMorte(
+  24,
+  "O barco rápido chama atenção dos Orcs nas margens do rio. Eles atacam sem aviso. A embarcação vira, e a correnteza leva Frodo para as profundezas. O Anel quase escapa também, mas a missão termina aqui."
+);
+
+paginas[25] = new PaginaExploracao(
+  25,
+  "A canoa pequena desliza silenciosamente pelas águas escuras. O grupo observa os arredores com cautela, sentindo a presença de inimigos invisíveis. Cada remada exige concentração, e o cansaço aumenta. Vocês avistam uma ilha à frente: parece segura para descansar, mas o tempo urge, e cada minuto conta.",
+  [
+    { texto: "Desembarcar na ilha para descanso rápido", proximaPagina: 26 },
+    { texto: "Continuar o percurso sem parar, mesmo cansados", proximaPagina: 88 }
+  ]
+);
+
+paginas[26] = new PaginaExploracao(
+  26,
+  "Na ilha, vocês percebem pegadas estranhas na areia e sinais de criaturas próximas. A floresta ao redor parece esconder algo sinistro. A escolha agora é seguir explorando para descobrir se há perigo ou continuar a viagem sem investigar, mas com risco de serem surpreendidos.",
+  [
+    { texto: "Investigar as pegadas estranhas, atentos a qualquer armadilha", proximaPagina: 27 },
+    { texto: "Ignorar e seguir viagem imediatamente", proximaPagina: 87 }
+  ]
+);
+
+paginas[27] = new PaginaBatalha(
+  27,
+  "Vocês encontram um pequeno grupo de Orcs escondido na ilha. Eles atacam rapidamente, mas a surpresa favorece vocês. A luta é intensa, e cada golpe pode salvar ou condenar o grupo.",
+  new Orc(),
+  [new Arma("Faca Élfica", 8)],
+  28
+);
+
+paginas[28] = new PaginaExploracao(
+  28,
+  "Após derrotar os Orcs, a ilha parece segura. Vocês descansam e Sam tenta levantar o moral do grupo, lembrando que a jornada ainda não acabou. Olhando para o rio, percebem que a travessia restante exige atenção: há correntezas fortes e criaturas que podem atacar na água. Como prosseguir?",
+  [
+    { texto: "Navegar cuidadosamente pelo centro do rio, enfrentando as correntes", proximaPagina: 29 },
+    { texto: "Seguir pela margem, próximo às árvores, usando cobertura", proximaPagina: 86 }
+  ]
+);
+
+paginas[29] = new PaginaExploracao(
+  29,
+  "Vocês escolhem navegar pelo centro do rio. Cada remada é exaustiva, mas o progresso é visível. O cansaço aperta, e a ansiedade aumenta. De repente, sombras sobem das águas: criaturas malignas espreitam, atraídas pelo poder do Anel. A decisão deve ser rápida.",
+  [
+    { texto: "Enfrentar as criaturas com coragem, lutando para proteger todos", proximaPagina: 30 },
+    { texto: "Tentar se esconder na água e passar despercebido", proximaPagina: 85 }
+  ]
+);
+
+paginas[30] = new PaginaBatalha(
+  30,
+  "Vocês enfrentam as criaturas aquáticas em uma luta desesperada. O Anel brilha intensamente, quase revelando sua presença aos inimigos. Cada movimento é vital para sobrevivência do grupo e sucesso da missão.",
+  new OrcMarinho(),
+  [],
+  31
+);
+
+paginas[31] = new PaginaExploracao(
+  31,
+  "Após atravessar o Anduin, o grupo segue em direção a Rohan. O caminho leva vocês à floresta antiga de Fangorn. Árvores gigantescas e antigas cercam o caminho, e sons estranhos ecoam. Sam comenta sobre a sensação de estar sendo observado. Cada passo parece carregado de mistério e perigo, e vocês sentem que não estão sozinhos.",
+  [
+    { texto: "Seguir pelo caminho principal, tentando ignorar os sons", proximaPagina: 32 },
+    { texto: "Investigar a floresta em busca da origem dos sons", proximaPagina: 34 }
+  ]
+);
+
+paginas[32] = new PaginaMorte(
+  32,
+  "Ao ignorar os sons e seguir pelo caminho, árvores antigas se movimentam de forma inesperada. Ents, confundidos com intrusos, atacam o grupo. Sem defesa suficiente, vocês são esmagados pelas raízes gigantes e troncos."
+);
+
+paginas[34] = new PaginaExploracao(
+  34,
+  "Vocês descobrem que os sons eram Ents despertando. Faramir, uma figura de esperança, aparece para guiá-los e evitar mal-entendidos. O grupo percebe que a prudência vale mais que a pressa. Continuar pelo bosque exige escolhas cuidadosas.",
+  [
+    { texto: "Agradecer a Faramir e seguir o caminho seguro pelo bosque", proximaPagina: 35 },
+    { texto: "Ignorar o aviso e correr por atalhos arriscados", proximaPagina: 84 }
+  ]
+);
+
+paginas[35] = new PaginaExploracao(
+  35,
+  "Vocês chegam a Rohan. As planícies vastas se estendem à frente, mas há sinais de ataque recente de Saruman: aldeias queimadas, campos abandonados e o vento carregando o cheiro de destruição. A escolha agora é seguir direto para Edoras, a capital, ou ajudar os aldeões antes de prosseguir.",
+  [
+    { texto: "Ir direto para Edoras, buscando reunir aliados com Théoden", proximaPagina: 36 },
+    { texto: "Ajudar os aldeões, arriscando atrasar a missão", proximaPagina: 83 }
+  ]
+);
+
+paginas[36] = new PaginaExploracao(
+  36,
+  "Chegando em Edoras, vocês encontram Théoden, o rei de Rohan, manipulados por Gríma. O clima é tenso. Gandalf, agora recuperado, tenta ajudar a despertar a coragem do rei. Vocês devem escolher como agir: apoiar Gandalf diretamente ou tentar influenciar Théoden com suas palavras.",
+  [
+    { texto: "Seguir Gandalf e ajudá-lo a despertar o rei", proximaPagina: 37 },
+    { texto: "Tentar convencer Théoden por conta própria", proximaPagina: 82 }
+  ]
+);
+
+paginas[37] = new PaginaExploracao(
+  37,
+  "Gandalf enfrenta Saruman mentalmente através da influência sobre Théoden. O rei desperta do feitiço, e os cavaleiros de Rohan se preparam para a batalha contra o exército de Saruman. Vocês precisam decidir se acompanham Théoden para a batalha ou ficam para proteger o Condado e o Anel.",
+  [
+    { texto: "Acompanhar Théoden na batalha em Helm's Deep", proximaPagina: 38 },
+    { texto: "Ficar e proteger o Anel, evitando se envolver na guerra", proximaPagina: 81 }
+  ]
+);
+
+paginas[38] = new PaginaExploracao(
+  38,
+  "No campo de batalha de Helm's Deep, a noite é escura e a tensão é máxima. O exército de Saruman se aproxima. Cada decisão que Frodo toma pode afetar a sobrevivência do grupo. Vocês precisam escolher se defendem a entrada principal ou patrulham os muros laterais, onde os ataques podem ser menos previsíveis.",
+  [
+    { texto: "Defender a entrada principal, enfrentando a maior ameaça", proximaPagina: 39 },
+    { texto: "Patrulhar os muros laterais, esperando ataques menores", proximaPagina: 80 }
+  ]
+);
+
+paginas[39] = new PaginaBatalha(
+  39,
+  "Os Uruk-hai avançam em força total. Frodo sente a pressão do Anel, mas a coragem surge. Lutas intensas acontecem, e cada movimento é crucial. A batalha é caótica, mas a estratégia e a união do grupo podem fazer a diferença.",
+  new UrukHai(),
+  [],
+  40
+);
+
+paginas[40] = new PaginaExploracao(
+  40,
+  "Após a batalha, o grupo de Frodo consegue resistir ao ataque inicial, mas as forças de Saruman não cessam. O futuro de Rohan ainda é incerto, e o grupo deve decidir os próximos passos: reforçar a cidade ou seguir viagem para continuar a missão do Anel. Cada escolha carrega riscos e consequências graves.",
+  [
+    { texto: "Reforçar a defesa de Rohan, ajudando a população e exércitos", proximaPagina: 41 },
+    { texto: "Seguir imediatamente com a missão do Anel, confiando em aliados", proximaPagina: 79 }
+  ]
+);
+
+paginas[41] = new PaginaExploracao(
+  41,
+  "Vocês deixam Rohan e seguem rumo a Mordor, passando pelas Terras Negras. O sol é pouco, o ar pesado, e cada passo é uma prova de resistência. Sam mantém Frodo firme, mas o peso do Anel aumenta com cada dia. Vocês encontram rastros de Gollum, que parece estar os seguindo. Devem decidir se o confrontam ou tentam usar sua ajuda.",
+  [
+    { texto: "Confrontar Gollum imediatamente, sem confiar nele", proximaPagina: 42 },
+    { texto: "Aceitar Gollum como guia, apesar da desconfiança", proximaPagina: 43 }
+  ]
+);
+
+paginas[42] = new PaginaMorte(
+  42,
+  "Gollum, ofendido e traído, alerta Sauron sobre sua presença. Vocês são atacados por Orcs enquanto atravessam a sombra de Mordor. A missão termina tragicamente."
+);
+
+paginas[43] = new PaginaExploracao(
+  43,
+  "Gollum guia vocês por caminhos secretos, evitando patrulhas e armadilhas. Mas sua ambição pelo Anel é visível em cada olhar. Frodo precisa manter vigilância constante. Vocês chegam às portas de Cirith Ungol, onde Shelob, a aranha gigante, aguarda. A decisão é crucial: enfrentar a aranha ou buscar caminho alternativo, arriscando atrasos e perigos desconhecidos.",
+  [
+    { texto: "Enfrentar Shelob diretamente, confiando em coragem e astúcia", proximaPagina: 44 },
+    { texto: "Tentar contornar o caminho por um desvio desconhecido", proximaPagina: 78 }
+  ]
+);
+
+paginas[44] = new PaginaBatalha(
+  44,
+  "Shelob ataca com velocidade e veneno mortal. Frodo sente a pressão do Anel aumentando. A luta exige estratégia, cuidado e coragem. Sam age com bravura para proteger Frodo, garantindo que a missão continue.",
+  new Shelob(),
+  [],
+  45
+);
+
+paginas[45] = new PaginaExploracao(
+  45,
+  "Após escapar de Shelob, vocês entram nas profundezas de Cirith Ungol. O ambiente é escuro, úmido e cheio de armadilhas. Orcs patrulham constantemente. Cada passo é vital para não serem descobertos. A escolha é seguir direto pelo caminho principal ou procurar passagens alternativas, mais seguras, mas mais longas.",
+  [
+    { texto: "Seguir pelo caminho principal, arriscando encontros com Orcs", proximaPagina: 46 },
+    { texto: "Explorar passagens alternativas, mais longas mas possivelmente seguras", proximaPagina: 77 }
+  ]
+);
+
+paginas[46] = new PaginaExploracao(
+  46,
+  "Vocês chegam às planícies finais próximas ao Monte da Perdição. A lava e o calor tornam cada passo doloroso. Frodo sente o Anel quase vivo, sussurrando para ser colocado de volta. Sam observa preocupado, e a escolha agora é se Frodo continua sozinho ou com Sam ao lado, ajudando a resistir à tentação.",
+  [
+    { texto: "Seguir sozinho, tentando resistir à influência do Anel", proximaPagina: 47 },
+    { texto: "Seguir com Sam, compartilhando o peso e o fardo", proximaPagina: 48 }
+  ]
+);
+
+paginas[47] = new PaginaMorte(
+  47,
+  "O poder do Anel é forte demais. Frodo sucumbe à tentação e se recusa a destruí-lo. Ele é cercado por Sauron e Orcs, e a missão falha definitivamente."
+);
+
+paginas[48] = new PaginaExploracao(
+  48,
+  "Com Sam ao lado, vocês avançam lentamente. O calor e a pressão do Anel são enormes. Vocês alcançam a borda da cratera. O momento da decisão final chega: lançar o Anel na lava ou hesitar, permitindo que o desejo de poder interfira.",
+  [
+    { texto: "Lançar o Anel na lava e destruir o mal para sempre", proximaPagina: 49 },
+    { texto: "Hesitar e manter o Anel consigo, cedendo à tentação", proximaPagina: 47 }
+  ]
+);
+
+paginas[49] = new PaginaExploracao(
+  49,
+  "O Anel cai na lava, e uma onda de destruição se espalha por Mordor. O poder de Sauron se desfaz, e as forças das trevas caem em desespero. Frodo e Sam são sacudidos pelo calor, mas a missão finalmente foi cumprida. A vitória é agridoce: muitos sacrificaram suas vidas, mas a liberdade retorna à Terra Média.",
+  [
+    { texto: "Retornar para o Condado e iniciar a vida após a aventura", proximaPagina: 50 }
+  ]
+);
+
+paginas[50] = new PaginaExploracao(
+  50,
+  "Vocês retornam ao Condado, onde a vida segue, mas nada será como antes. Frodo carrega cicatrizes físicas e emocionais, lembranças de coragem, perda e amizade. A jornada terminou, e a Terra Média está segura, pelo menos por agora. A missão do Anel se cumpriu, e a história de Frodo se encerra com triunfo e reflexão.",
+  [] // não há escolhas
+);}
