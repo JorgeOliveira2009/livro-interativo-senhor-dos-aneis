@@ -156,12 +156,12 @@ class PaginaMorte extends PaginaBase {
 // ==================== Criação das páginas ====================
 const paginas: Record<number, IPagina> = {};
 
-// Função auxiliar para inserir páginas (facilita manter tudo organizado)
+
 function addPagina(p: IPagina) {
   paginas[p.id] = p;
 }
 
-// Página 1 a 10 (início)
+
 addPagina(
   new PaginaExploracao(
     1,
@@ -259,7 +259,7 @@ addPagina(
   )
 );
 
-// Página 11 em diante (restante do livro)
+
 addPagina(
   new PaginaExploracao(
     11,
@@ -663,7 +663,7 @@ while (true) {
   }
 
   
-  const escolha = readlineSync.question("Escolha uma opção (número): ");
+  const escolha = readlineSync.question("Escolha uma opcao (numero): ");
   const indice = parseInt(escolha, 10) - 1;
 
   if (isNaN(indice) || indice < 0 || indice >= pagina.escolhas.length) {
